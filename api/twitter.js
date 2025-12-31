@@ -1,4 +1,6 @@
-// FINAL Twitter API Handler - Using Correct SocialData.tools Endpoints
+// Twitter API Handler - Using FREE Official Twitter API v2
+// Get your FREE Bearer Token at: https://developer.twitter.com/
+
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -21,10 +23,11 @@ export default async function handler(req, res) {
         });
     }
     
-    const API_KEY = process.env.SOCIALDATA_API_KEY;
+    // Twitter API v2 Bearer Token (FREE!)
+    const BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
     
-    if (!API_KEY) {
-        console.error('❌ SOCIALDATA_API_KEY not found!');
+    if (!BEARER_TOKEN) {
+        console.error('❌ TWITTER_BEARER_TOKEN not found!');
         return res.status(500).json({
             error: true,
             message: 'API configuration error'
@@ -34,76 +37,63 @@ export default async function handler(req, res) {
     console.log(`🔍 Fetching data for @${username}...`);
     
     try {
-        // Step 1: Get user profile (to get user_id and pfp)
-        console.log('📡 Step 1: Fetching user profile...');
+        // Step 1: Get user by username
+        console.log('📡 Step 1: Getting user info...');
         
-        const profileResponse = await fetch(
-            `https://api.socialdata.tools/twitter/user/${username}`,
+        const userResponse = await fetch(
+            `https://api.twitter.com/2/users/by/username/${username}?user.fields=profile_image_url`,
             {
-                method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${API_KEY}`,
-                    'Accept': 'application/json'
+                    'Authorization': `Bearer ${BEARER_TOKEN}`
                 }
             }
         );
         
-        if (!profileResponse.ok) {
-            const errorText = await profileResponse.text();
-            console.error('Profile API Error:', profileResponse.status, errorText);
+        if (!userResponse.ok) {
+            const errorData = await userResponse.json();
+            console.error('User API Error:', errorData);
             
-            if (profileResponse.status === 404) {
+            if (userResponse.status === 404) {
                 return res.status(404).json({
                     error: true,
                     message: `User @${username} tidak ditemukan di X!`
                 });
             }
             
-            if (profileResponse.status === 402) {
-                return res.status(402).json({
-                    error: true,
-                    message: 'Insufficient API credits. Please check your SocialData.tools account.'
-                });
-            }
-            
-            throw new Error(`Profile API returned ${profileResponse.status}`);
+            throw new Error(`User API returned ${userResponse.status}`);
         }
         
-        const profile = await profileResponse.json();
-        const userId = profile.id_str || profile.id.toString();
+        const userData = await userResponse.json();
+        const user = userData.data;
+        const userId = user.id;
         
-        console.log(`✅ Profile fetched - User ID: ${userId}`);
+        console.log(`✅ User found - ID: ${userId}`);
         
-        // Step 2: Get user tweets using user_id
-        console.log('📡 Step 2: Fetching user tweets...');
+        // Step 2: Get user tweets
+        console.log('📡 Step 2: Getting user tweets...');
         
         const tweetsResponse = await fetch(
-            `https://api.socialdata.tools/twitter/user/${userId}/tweets-and-replies`,
+            `https://api.twitter.com/2/users/${userId}/tweets?` +
+            `max_results=100&` +
+            `tweet.fields=created_at,public_metrics,entities,attachments&` +
+            `expansions=attachments.media_keys&` +
+            `media.fields=url,preview_image_url`,
             {
-                method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${API_KEY}`,
-                    'Accept': 'application/json'
+                    'Authorization': `Bearer ${BEARER_TOKEN}`
                 }
             }
         );
         
         if (!tweetsResponse.ok) {
-            const errorText = await tweetsResponse.text();
-            console.error('Tweets API Error:', tweetsResponse.status, errorText);
-            
-            if (tweetsResponse.status === 402) {
-                return res.status(402).json({
-                    error: true,
-                    message: 'Insufficient API credits. Please check your SocialData.tools account.'
-                });
-            }
-            
+            const errorData = await tweetsResponse.json();
+            console.error('Tweets API Error:', errorData);
             throw new Error(`Tweets API returned ${tweetsResponse.status}`);
         }
         
         const tweetsData = await tweetsResponse.json();
-        const allTweets = tweetsData.tweets || tweetsData.data || [];
+        const allTweets = tweetsData.data || [];
+        const mediaIncludes = tweetsData.includes?.media || [];
         
         console.log(`📊 Found ${allTweets.length} total tweets`);
         
@@ -111,7 +101,7 @@ export default async function handler(req, res) {
         const keywords = ['gmic', 'seismic', '@seismicsys', 'seismicsys', '#gmic', '#seismic', '$gmic', '$seismic'];
         
         const seismicTweets = allTweets.filter(tweet => {
-            const text = (tweet.full_text || tweet.text || '').toLowerCase();
+            const text = (tweet.text || '').toLowerCase();
             return keywords.some(keyword => text.includes(keyword));
         });
         
@@ -129,8 +119,12 @@ export default async function handler(req, res) {
         
         // Step 4: Sort by engagement
         const sorted = seismicTweets.sort((a, b) => {
-            const engagementA = (a.favorite_count || 0) + (a.retweet_count || 0) + (a.reply_count || 0);
-            const engagementB = (b.favorite_count || 0) + (b.retweet_count || 0) + (b.reply_count || 0);
+            const metricsA = a.public_metrics || {};
+            const metricsB = b.public_metrics || {};
+            
+            const engagementA = (metricsA.like_count || 0) + (metricsA.retweet_count || 0) + (metricsA.reply_count || 0);
+            const engagementB = (metricsB.like_count || 0) + (metricsB.retweet_count || 0) + (metricsB.reply_count || 0);
+            
             return engagementB - engagementA;
         });
         
@@ -138,20 +132,30 @@ export default async function handler(req, res) {
         const top10 = sorted.slice(0, 10);
         
         // Step 6: Format tweets
-        const formattedTweets = top10.map((tweet, index) => ({
-            rank: index + 1,
-            id: tweet.id_str || tweet.id.toString(),
-            text: tweet.full_text || tweet.text || '',
-            likes: tweet.favorite_count || 0,
-            retweets: tweet.retweet_count || 0,
-            replies: tweet.reply_count || 0,
-            views: tweet.views_count || tweet.view_count || 0,
-            created_at: tweet.tweet_created_at || tweet.created_at || '',
-            media: tweet.entities?.media?.[0]?.media_url_https || 
-                   tweet.extended_entities?.media?.[0]?.media_url_https ||
-                   null,
-            link: `https://twitter.com/${username}/status/${tweet.id_str || tweet.id}`
-        }));
+        const formattedTweets = top10.map((tweet, index) => {
+            const metrics = tweet.public_metrics || {};
+            
+            // Get media URL if exists
+            let mediaUrl = null;
+            if (tweet.attachments?.media_keys) {
+                const mediaKey = tweet.attachments.media_keys[0];
+                const media = mediaIncludes.find(m => m.media_key === mediaKey);
+                mediaUrl = media?.url || media?.preview_image_url || null;
+            }
+            
+            return {
+                rank: index + 1,
+                id: tweet.id,
+                text: tweet.text || '',
+                likes: metrics.like_count || 0,
+                retweets: metrics.retweet_count || 0,
+                replies: metrics.reply_count || 0,
+                views: metrics.impression_count || 0,
+                created_at: tweet.created_at || '',
+                media: mediaUrl,
+                link: `https://twitter.com/${username}/status/${tweet.id}`
+            };
+        });
         
         console.log('✅ Data formatted successfully');
         
@@ -159,7 +163,7 @@ export default async function handler(req, res) {
         return res.status(200).json({
             error: false,
             username: username,
-            pfpUrl: profile.profile_image_url_https || profile.profile_image_url,
+            pfpUrl: user.profile_image_url || `https://ui-avatars.com/api/?name=${username}&background=00d9ff&color=fff&size=200`,
             totalTweets: formattedTweets.length,
             topTweets: formattedTweets,
             bestTweet: formattedTweets[0]

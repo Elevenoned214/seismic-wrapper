@@ -1,5 +1,5 @@
 // Twitter API Handler - Using FREE Official Twitter API v2
-// Get your FREE Bearer Token at: https://developer.twitter.com/
+// UPDATED: Fetch 100 tweets, return TOP 5
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -23,7 +23,6 @@ export default async function handler(req, res) {
         });
     }
     
-    // Twitter API v2 Bearer Token (FREE!)
     const BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
     
     if (!BEARER_TOKEN) {
@@ -69,8 +68,8 @@ export default async function handler(req, res) {
         
         console.log(`✅ User found - ID: ${userId}`);
         
-        // Step 2: Get user tweets
-        console.log('📡 Step 2: Getting user tweets...');
+        // Step 2: Get user tweets (100 tweets for better sample)
+        console.log('📡 Step 2: Getting user tweets (100 tweets)...');
         
         const tweetsResponse = await fetch(
             `https://api.twitter.com/2/users/${userId}/tweets?` +
@@ -128,11 +127,11 @@ export default async function handler(req, res) {
             return engagementB - engagementA;
         });
         
-        // Step 5: Get top 10
-        const top10 = sorted.slice(0, 10);
+        // Step 5: Get top 5 (CHANGED from 10 to 5)
+        const top5 = sorted.slice(0, 5);
         
         // Step 6: Format tweets
-        const formattedTweets = top10.map((tweet, index) => {
+        const formattedTweets = top5.map((tweet, index) => {
             const metrics = tweet.public_metrics || {};
             
             // Get media URL if exists
@@ -157,7 +156,7 @@ export default async function handler(req, res) {
             };
         });
         
-        console.log('✅ Data formatted successfully');
+        console.log('✅ Data formatted successfully - TOP 5 selected');
         
         // Step 7: Return success response
         return res.status(200).json({

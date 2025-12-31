@@ -215,10 +215,10 @@ class WrappedAnimation {
         // Update title based on count
         if (tweets.length === 1) {
             title.textContent = 'YOUR POST';
-        } else if (tweets.length < 10) {
+        } else if (tweets.length < 5) {
             title.textContent = `YOUR TOP ${tweets.length} POSTS`;
         } else {
-            title.textContent = 'YOUR TOP 10 POSTS';
+            title.textContent = 'YOUR TOP 5 POSTS';
         }
         
         // Clear container

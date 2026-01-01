@@ -1,7 +1,7 @@
 // Twitter API Handler - Using Nitter RSS Feed (FREE!)
-// No API key needed, no rate limits!
+// CommonJS format for Vercel compatibility
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -25,17 +25,15 @@ export default async function handler(req, res) {
     
     console.log(`🔍 Fetching data for @${username} via Nitter...`);
     
-    // Nitter instances (fallback if one is down)
+    // Nitter instances (ordered by reliability - best first)
     const nitterInstances = [
-        'nitter.poast.org',
-        'xcancel.com',
-        'nitter.catsarch.com',
-        'https://nitter.space/',
-        'nuku.trabun.org',
-        'lightbrd.com',
-        'nitter.tiekoetter.com',
-        'nitter.net',
-
+        'xcancel.com',           // 98% uptime, 587ms - BEST!
+        'nitter.space',          // 96% uptime, 950ms
+        'lightbrd.com',          // 96% uptime, 917ms
+        'nuku.trubun.org',       // 96% uptime, 1018ms (CL)
+        'nitter.poast.org',      // 86% uptime, 958ms
+        'nitter.catsarch.com',   // 58% uptime, 1192ms (backup)
+        'nitter.net'             // General backup
     ];
     
     try {
@@ -209,194 +207,4 @@ export default async function handler(req, res) {
             details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
-}
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-    
-    if (req.method !== 'GET') {
-        return res.status(405).json({ error: true, message: 'Method not allowed' });
-    }
-    
-    const { username } = req.query;
-    
-    if (!username) {
-        return res.status(400).json({
-            error: true,
-            message: 'Username is required'
-        });
-    }
-    
-    console.log(`🔍 Fetching data for @${username} via Nitter...`);
-    
-    // Nitter instances (fallback if one is down)
-    const nitterInstances = [
-        'nitter.poast.org',
-        'xcancel.com',
-        'nitter.catsarch.com',
-        'nitter.net'
-    ];
-    
-    try {
-        let rssData = null;
-        let usedInstance = null;
-        
-        // Try each instance until one works
-        for (const instance of nitterInstances) {
-            try {
-                console.log(`📡 Trying instance: ${instance}`);
-                
-                const rssUrl = `https://${instance}/${username}/rss`;
-                const response = await fetch(rssUrl, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                    },
-                    signal: AbortSignal.timeout(10000) // 10s timeout
-                });
-                
-                if (response.ok) {
-                    const xmlText = await response.text();
-                    rssData = await parseStringPromise(xmlText);
-                    usedInstance = instance;
-                    console.log(`✅ Success with instance: ${instance}`);
-                    break;
-                }
-            } catch (e) {
-                console.log(`❌ Instance ${instance} failed:`, e.message);
-                continue;
-            }
-        }
-        
-        if (!rssData) {
-            throw new Error('All Nitter instances failed');
-        }
-        
-        console.log(`✅ RSS feed fetched from ${usedInstance}`);
-        
-        // Parse RSS feed
-        const channel = rssData.rss?.channel?.[0];
-        if (!channel || !channel.item) {
-            throw new Error('Invalid RSS format');
-        }
-        
-        const items = channel.item;
-        console.log(`📊 Found ${items.length} total tweets`);
-        
-        // Filter tweets about GMIC/SEISMIC
-        const keywords = ['gmic', 'seismic', '@seismicsys', 'seismicsys', '#gmic', '#seismic', '$gmic', '$seismic'];
-        
-        const seismicTweets = items.filter(item => {
-            const title = (item.title?.[0] || '').toLowerCase();
-            const description = (item.description?.[0] || '').toLowerCase();
-            const text = title + ' ' + description;
-            return keywords.some(keyword => text.includes(keyword));
-        });
-        
-        console.log(`📊 Found ${seismicTweets.length} tweets about GMIC/SEISMIC`);
-        
-        // Validation
-        if (seismicTweets.length === 0) {
-            console.log('⚠️ No tweets found with keywords');
-            return res.status(400).json({
-                error: true,
-                message: 'Anda belum pernah posting tentang GMIC/SEISMIC!',
-                suggestion: 'Buat minimal 1 tweet yang mention: GMIC, SEISMIC, atau @SeismicSys'
-            });
-        }
-        
-        // Parse tweets and extract metrics from description
-        const parsedTweets = seismicTweets.map(item => {
-            const description = item.description?.[0] || '';
-            const title = item.title?.[0] || '';
-            const link = item.link?.[0] || '';
-            const pubDate = item.pubDate?.[0] || '';
-            
-            // Extract tweet ID from link
-            const tweetIdMatch = link.match(/status\/(\d+)/);
-            const tweetId = tweetIdMatch ? tweetIdMatch[1] : '';
-            
-            // Try to extract metrics from description (Nitter includes them)
-            // Format: "💬 X  🔁 Y  ❤ Z"
-            const replyMatch = description.match(/💬\s*(\d+)/);
-            const retweetMatch = description.match(/🔁\s*(\d+)/);
-            const likeMatch = description.match(/❤\s*(\d+)/);
-            
-            const replies = replyMatch ? parseInt(replyMatch[1]) : 0;
-            const retweets = retweetMatch ? parseInt(retweetMatch[1]) : 0;
-            const likes = likeMatch ? parseInt(likeMatch[1]) : 0;
-            
-            // Clean tweet text (remove HTML tags)
-            const cleanText = description
-                .replace(/<[^>]*>/g, '')
-                .replace(/💬\s*\d+\s*🔁\s*\d+\s*❤\s*\d+/g, '')
-                .trim();
-            
-            return {
-                id: tweetId,
-                text: cleanText || title,
-                likes: likes,
-                retweets: retweets,
-                replies: replies,
-                views: 0, // Nitter doesn't provide views
-                created_at: pubDate,
-                link: link,
-                engagement: likes + retweets + replies
-            };
-        });
-        
-        // Sort by engagement
-        const sorted = parsedTweets.sort((a, b) => b.engagement - a.engagement);
-        
-        // Get best tweet
-        const bestTweet = sorted[0];
-        
-        console.log('✅ Best tweet found:', {
-            likes: bestTweet.likes,
-            retweets: bestTweet.retweets,
-            engagement: bestTweet.engagement
-        });
-        
-        // Format response
-        const formattedBestTweet = {
-            rank: 1,
-            id: bestTweet.id,
-            text: bestTweet.text,
-            likes: bestTweet.likes,
-            retweets: bestTweet.retweets,
-            replies: bestTweet.replies,
-            views: 0,
-            created_at: bestTweet.created_at,
-            media: null, // Nitter RSS doesn't include media easily
-            link: bestTweet.link
-        };
-        
-        // Get profile picture URL (construct from Nitter)
-        const pfpUrl = `https://${usedInstance}/pic/profile_images%2F${username}`;
-        
-        console.log('✅ Data formatted successfully - Nitter RSS');
-        
-        // Return success response
-        return res.status(200).json({
-            error: false,
-            username: username,
-            pfpUrl: pfpUrl,
-            totalTweets: seismicTweets.length,
-            bestTweet: formattedBestTweet
-        });
-        
-    } catch (error) {
-        console.error('❌ Server Error:', error.message);
-        console.error('Stack:', error.stack);
-        
-        return res.status(500).json({
-            error: true,
-            message: 'Terjadi kesalahan saat mengambil data dari Nitter',
-            suggestion: 'Coba lagi dalam beberapa saat',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-
+};

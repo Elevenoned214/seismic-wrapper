@@ -15,7 +15,7 @@
         <!-- Particle Effect -->
         <canvas id="particleCanvas" class="particle-canvas"></canvas>
 
-        <!-- Animation Container -->
+        <!-- Animation Wrapper -->
         <div class="animation-wrapper" id="animationWrapper">
             
             <!-- Scene 1: Stats -->
@@ -38,18 +38,8 @@
                 </div>
             </div>
 
-            <!-- Scene 2: Top 10 Content -->
+            <!-- Scene 2: Best Content Detail (was Scene 3) -->
             <div class="scene scene-2" id="scene2">
-                <div class="scan-line"></div>
-                <h2 class="scene-title" id="scene2Title">YOUR TOP 5 POSTS</h2>
-                
-                <div class="top-10-container" id="top10Container">
-                    <!-- Dynamic content -->
-                </div>
-            </div>
-
-            <!-- Scene 3: Best Content Detail -->
-            <div class="scene scene-3" id="scene3">
                 <div class="scan-line"></div>
                 <h2 class="scene-title">YOUR BEST POST 2024</h2>
                 
@@ -95,36 +85,28 @@
                 </div>
             </div>
 
-            <!-- Scene 4: Magnitude Badge -->
-            <div class="scene scene-4" id="scene4">
+            <!-- Scene 3: Magnitude Badge (was Scene 4) -->
+            <div class="scene scene-3" id="scene3">
                 <div class="scan-line"></div>
-                <h2 class="scene-title">YOUR MAGNITUDE</h2>
+                <h2 class="scene-title">YOUR MAGNITUDE LEVEL</h2>
                 
-                <div class="badge-container">
+                <div class="magnitude-display">
                     <div class="badge-glow"></div>
-                    <img src="" alt="Magnitude Badge" class="magnitude-badge" id="magnitudeBadge">
-                    <div class="badge-level" id="badgeLevel">MAGNITUDE 1</div>
+                    <img src="assets/badges/magnitude-5.png" alt="Magnitude Badge" class="magnitude-badge" id="magnitudeBadge">
+                    <div class="badge-level" id="badgeLevel">MAGNITUDE 5</div>
+                    <div class="badge-description">Community Champion</div>
                 </div>
             </div>
 
-            <!-- Footer (Always Visible) -->
-            <div class="footer-info">
-                <div class="user-pfp-container">
-                    <img src="" alt="Profile" class="user-pfp" id="userPfp">
-                </div>
-                <div class="user-username" id="userUsername">@username</div>
-                <div class="branding">SEISMIC WRAPPED 2024</div>
-            </div>
         </div>
 
-        <!-- Export Controls -->
-        <div class="export-controls" id="exportControls">
-            <button class="export-btn" id="replayBtn">
-                <span>🔄 Replay</span>
-            </button>
-            <button class="export-btn" id="shareBtn">
-                <span>🔗 Copy Link</span>
-            </button>
+        <!-- User Footer -->
+        <div class="user-footer">
+            <div class="user-info">
+                <img src="" alt="Profile" class="user-pfp" id="userPfp">
+                <span class="user-username" id="userUsername">@username</span>
+            </div>
+            <div class="seismic-branding">SEISMIC WRAPPED 2024</div>
         </div>
     </div>
 

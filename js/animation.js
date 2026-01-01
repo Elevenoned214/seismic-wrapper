@@ -1,9 +1,9 @@
-// Animation Controller
+// Animation Controller - Simplified 3 Scenes
 class WrappedAnimation {
     constructor() {
-        this.scenes = ['scene1', 'scene2', 'scene3', 'scene4'];
+        this.scenes = ['scene1', 'scene2', 'scene3']; // Only 3 scenes now!
         this.currentSceneIndex = 0;
-        this.sceneDuration = 3000; // 3 seconds per scene
+        this.sceneDuration = 3000;
         this.animationStarted = false;
         
         // Get data from localStorage
@@ -192,13 +192,10 @@ class WrappedAnimation {
         document.getElementById('discordCount').setAttribute('data-target', this.wrappedData.discordChats);
         document.getElementById('tweetCount').setAttribute('data-target', this.twitterData.totalTweets);
 
-        // Set scene 2 data (Top 10)
-        this.populateTop10();
-
-        // Set scene 3 data (Best tweet)
+        // Set scene 2 data (Best tweet) - NO MORE TOP 10!
         this.populateBestTweet();
 
-        // Set scene 4 data (Magnitude)
+        // Set scene 3 data (Magnitude)
         const magnitudeBadge = document.getElementById('magnitudeBadge');
         const badgeLevel = document.getElementById('badgeLevel');
         magnitudeBadge.src = `assets/badges/magnitude-${this.wrappedData.magnitude}.png`;
@@ -207,108 +204,75 @@ class WrappedAnimation {
         console.log('✅ User data set successfully');
     }
 
-    populateTop10() {
-        const container = document.getElementById('top10Container');
-        const title = document.getElementById('scene2Title');
-        const tweets = this.twitterData.topTweets;
+    populateBestTweet() {
+        const tweet = this.twitterData.bestTweet;
         
-        // Update title based on count
-        if (tweets.length === 1) {
-            title.textContent = 'YOUR POST';
-        } else if (tweets.length < 5) {
-            title.textContent = `YOUR TOP ${tweets.length} POSTS`;
-        } else {
-            title.textContent = 'YOUR TOP 5 POSTS';
+        if (!tweet) {
+            console.error('❌ No best tweet data!');
+            return;
+        }
+
+        // Set tweet data
+        document.getElementById('bestTweetAuthor').textContent = `@${this.wrappedData.username}`;
+        document.getElementById('bestTweetText').textContent = tweet.text;
+        
+        // Format date
+        if (tweet.created_at) {
+            const date = new Date(tweet.created_at);
+            const formatted = date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            });
+            document.getElementById('bestTweetDate').textContent = formatted;
         }
         
-        // Clear container
-        container.innerHTML = '';
+        // Set metrics
+        document.getElementById('bestLikes').textContent = this.formatNumber(tweet.likes);
+        document.getElementById('bestRetweets').textContent = this.formatNumber(tweet.retweets);
+        document.getElementById('bestReplies').textContent = this.formatNumber(tweet.replies);
         
-        // Create tweet items
-        tweets.forEach((tweet, index) => {
-            const item = document.createElement('div');
-            item.className = 'top-item';
-            if (index < 3) item.classList.add(`rank-${index + 1}`);
-            
-            // Rank emoji
-            const rankEmojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
-            const rankEmoji = rankEmojis[index] || `${index + 1}️⃣`;
-            
-            // Truncate text
-            const maxLength = 60;
-            const text = tweet.text.length > maxLength 
-                ? tweet.text.substring(0, maxLength) + '...' 
-                : tweet.text;
-            
-            item.innerHTML = `
-                <div class="rank-emoji">${rankEmoji}</div>
-                <div class="tweet-preview">
-                    <div class="tweet-text-short">${this.escapeHtml(text)}</div>
-                </div>
-                <div class="tweet-likes">❤️ ${this.formatNumber(tweet.likes)}</div>
-            `;
-            
-            container.appendChild(item);
-        });
-    }
-
-    populateBestTweet() {
-        const best = this.twitterData.bestTweet;
+        // Set views if available
+        if (tweet.views && tweet.views > 0) {
+            document.getElementById('bestViews').textContent = this.formatNumber(tweet.views);
+            document.getElementById('bestViewsMetric').style.display = 'flex';
+        }
         
-        document.getElementById('bestTweetAuthor').textContent = `@${this.wrappedData.username}`;
-        document.getElementById('bestTweetDate').textContent = this.formatDate(best.created_at);
-        document.getElementById('bestTweetText').textContent = best.text;
-        
-        // Media
-        if (best.media) {
+        // Set media if available
+        if (tweet.media) {
             const mediaContainer = document.getElementById('bestTweetMedia');
             const mediaImg = document.getElementById('bestTweetMediaImg');
-            mediaImg.src = best.media;
+            mediaImg.src = tweet.media;
             mediaContainer.style.display = 'block';
         }
         
-        // Metrics
-        document.getElementById('bestLikes').textContent = this.formatNumber(best.likes);
-        document.getElementById('bestRetweets').textContent = this.formatNumber(best.retweets);
-        document.getElementById('bestReplies').textContent = this.formatNumber(best.replies);
-        
-        // Views (if available)
-        if (best.views && best.views > 0) {
-            document.getElementById('bestViewsMetric').style.display = 'flex';
-            document.getElementById('bestViews').textContent = this.formatNumber(best.views);
-        }
+        console.log('✅ Best tweet populated');
     }
 
     startAnimation() {
         if (this.animationStarted) return;
         this.animationStarted = true;
 
-        console.log('🎬 Starting animation...');
+        console.log('🎬 Starting animation (3 scenes)...');
 
         // Scene 1: Stats (3s)
         this.showScene(0);
         this.animateCounters();
 
-        // Scene 2: Top 10 (3s)
+        // Scene 2: Best Content (4s)
         setTimeout(() => {
             this.showScene(1);
         }, 3000);
 
-        // Scene 3: Best Content (4s)
+        // Scene 3: Magnitude (3s)
         setTimeout(() => {
             this.showScene(2);
-        }, 6000);
+        }, 7000);
 
-        // Scene 4: Magnitude (3s)
+        // Animation complete
         setTimeout(() => {
-            this.showScene(3);
-        }, 10000);
-
-        // Show export controls
-        setTimeout(() => {
-            document.getElementById('exportControls').style.opacity = '1';
             console.log('✅ Animation complete');
-        }, 13000);
+        }, 10000);
     }
 
     showScene(index) {
@@ -367,55 +331,15 @@ class WrappedAnimation {
         return num.toString();
     }
 
-    formatDate(dateString) {
-        if (!dateString) return '';
-        
-        try {
-            const date = new Date(dateString);
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            return `${date.getDate()} ${months[date.getMonth()]}`;
-        } catch (e) {
-            return '';
-        }
-    }
-
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
-
-    replay() {
-        console.log('🔄 Replaying animation...');
-        this.currentSceneIndex = 0;
-        this.animationStarted = false;
-        document.getElementById('exportControls').style.opacity = '0';
-        this.startAnimation();
-    }
 }
 
-// Initialize on page load
+// Initialize animation when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    window.wrappedAnimationInstance = new WrappedAnimation();
-
-    // Replay button
-    document.getElementById('replayBtn').addEventListener('click', () => {
-        window.wrappedAnimationInstance.replay();
-    });
-
-    // Share button
-    document.getElementById('shareBtn').addEventListener('click', () => {
-        const url = window.location.href;
-        navigator.clipboard.writeText(url).then(() => {
-            const btn = document.getElementById('shareBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<span>✓ Copied!</span>';
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-            }, 2000);
-        }).catch(err => {
-            console.error('Failed to copy:', err);
-            alert('Link: ' + url);
-        });
-    });
+    console.log('🎬 Initializing Wrapped Animation...');
+    new WrappedAnimation();
 });

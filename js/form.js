@@ -80,8 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!discordChats || discordChats < 0) {
             showError(
-                'Input Tidak Valid',
-                'Masukkan jumlah Discord messages yang valid!'
+                'Not Valid',
+                'Enter the data correctly'
             );
             return;
         }

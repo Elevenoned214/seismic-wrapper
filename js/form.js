@@ -116,8 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.error) {
                 console.log('❌ API returned error');
                 showError(
-                    data.message || 'Terjadi Kesalahan',
-                    data.suggestion || 'Coba lagi nanti'
+                    data.message || 'Failed data',
+                    data.suggestion || 'Refresh'
                 );
                 
                 submitBtn.classList.remove('loading');
@@ -157,8 +157,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('❌ Error:', error);
             showError(
-                'Terjadi Kesalahan',
-                'Gagal terhubung ke server. Pastikan koneksi internet Anda stabil dan coba lagi!'
+                'EROR',
+                'Your internet is bad'
             );
             
             submitBtn.classList.remove('loading');

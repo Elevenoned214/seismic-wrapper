@@ -74,36 +74,49 @@ export default async function handler(req, res) {
         
         console.log(`✅ Profile fetched - User ID: ${userId}`);
         
-        // Step 2: Get user tweets (only recent 20 to find best one)
+        // Step 2: Get user tweets (only recent tweets to find best one)
         console.log('📡 Step 2: Fetching user tweets...');
         
-        const tweetsResponse = await fetch(
-            `https://api.socialdata.tools/twitter/user/${userId}/tweets-and-replies`,
-            {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${API_KEY}`,
-                    'Accept': 'application/json'
-                }
-            }
-        );
+        // Try to get tweets directly from user timeline
+        // SocialData might have different endpoints available
+        let tweetsResponse;
+        let allTweets = [];
         
-        if (!tweetsResponse.ok) {
-            const errorText = await tweetsResponse.text();
-            console.error('Tweets API Error:', tweetsResponse.status, errorText);
+        try {
+            // Try primary endpoint first
+            tweetsResponse = await fetch(
+                `https://api.socialdata.tools/twitter/user/${userId}/tweets`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Accept': 'application/json'
+                    }
+                }
+            );
             
-            if (tweetsResponse.status === 402) {
-                return res.status(402).json({
-                    error: true,
-                    message: 'Saldo API habis. Silakan top up di SocialData.tools'
-                });
+            if (tweetsResponse.ok) {
+                const tweetsData = await tweetsResponse.json();
+                allTweets = tweetsData.tweets || tweetsData.data || [];
             }
-            
-            throw new Error(`Tweets API returned ${tweetsResponse.status}`);
+        } catch (e) {
+            console.error('Primary endpoint failed:', e.message);
         }
         
-        const tweetsData = await tweetsResponse.json();
-        const allTweets = tweetsData.tweets || tweetsData.data || [];
+        // If that didn't work, try getting recent tweets via profile
+        if (allTweets.length === 0) {
+            console.log('📡 Trying alternative: using profile statuses...');
+            // Use the profile data which might include recent tweets
+            if (profile.statuses && profile.statuses.length > 0) {
+                allTweets = profile.statuses;
+            } else if (profile.status) {
+                allTweets = [profile.status];
+            }
+        }
+        
+        if (allTweets.length === 0) {
+            throw new Error('Could not fetch tweets from any endpoint');
+        }
         
         console.log(`📊 Found ${allTweets.length} total tweets`);
         

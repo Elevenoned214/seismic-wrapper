@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seismic Wrapped 2024</title>
+    <title>Seismic Wrapper</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/form.css">
 </head>
@@ -11,14 +11,14 @@
     <div class="form-container">
         <div class="logo-container">
             <img src="assets/logo.jpeg" alt="Seismic Logo" class="logo">
-            <h1>SEISMIC WRAPPED 2024</h1>
-            <p class="subtitle">Create your impact card</p>
+            <h1>SEISMIC WRAPPER 2025</h1>
+            
         </div>
 
         <form id="wrappedForm" class="wrapped-form">
             <!-- Link Profil X -->
             <div class="form-group">
-                <label for="xProfileLink">Link Profil X Anda</label>
+                <label for="xProfileLink">Link X your profile</label>
                 <input 
                     type="url" 
                     id="xProfileLink" 
@@ -27,20 +27,17 @@
                     required
                     autocomplete="off"
                 >
-                <span class="form-hint">
-                    Paste link profil X Anda. Sistem akan mencari tweet tentang: 
-                    <strong>GMIC, SEISMIC, @SeismicSys</strong>
-                </span>
+                
             </div>
 
             <!-- Discord Messages -->
             <div class="form-group">
-                <label for="discordChats">Pesan Discord yang Dikirim</label>
+                <label for="discordChats">Messages Discord</label>
                 <input 
                     type="number" 
                     id="discordChats" 
                     name="discordChats" 
-                    placeholder="contoh: 1500"
+                    placeholder="Example: 1500"
                     min="0"
                     required
                 >
@@ -48,7 +45,7 @@
 
             <!-- Magnitude Selection -->
             <div class="form-group">
-                <label>Pilih Magnitude Anda</label>
+                <label>Select your MAGNITUDE</label>
                 <div class="magnitude-selector">
                     <div class="magnitude-option">
                         <input type="radio" id="mag1" name="magnitude" value="1" required>
@@ -117,7 +114,7 @@
             </div>
 
             <button type="submit" class="submit-btn" id="submitBtn">
-                <span class="btn-text">Generate Wrapped</span>
+                <span class="btn-text">Generate Wrapper</span>
                 <span class="btn-loader"></span>
             </button>
         </form>
@@ -126,8 +123,8 @@
         <div class="loading-overlay" id="loadingOverlay">
             <div class="loading-content">
                 <div class="spinner"></div>
-                <p class="loading-text">Membuat Seismic Wrapped Anda...</p>
-                <p class="loading-subtext" id="loadingSubtext">Memproses data</p>
+                <p class="loading-text">Creating a SEISMIC WRAPPER...</p>
+                <p class="loading-subtext" id="loadingSubtext">Load.....</p>
             </div>
         </div>
 
@@ -135,18 +132,18 @@
         <div class="error-modal" id="errorModal">
             <div class="error-content">
                 <div class="error-icon">⚠️</div>
-                <h2 id="errorTitle">Belum Bisa Generate Wrapped</h2>
+                <h2 id="errorTitle">Not yet</h2>
                 <p id="errorMessage"></p>
                 <div class="error-tips">
                     <h4>📝 Tips:</h4>
                     <ul>
-                        <li>Tweet tentang GMIC atau SEISMIC</li>
-                        <li>Tag @SeismicSys di tweet Anda</li>
-                        <li>Use hashtag #GMIC atau #SEISMIC</li>
+                        <li>Tweet about GMIC or SEISMIC</li>
+                        <li>Tag @SeismicSys</li>
+                        <li>Use tag #GMIC or #SEISMIC</li>
                     </ul>
                 </div>
                 <button class="error-close-btn" id="errorCloseBtn">
-                    Oke, Saya Mengerti
+                    Back
                 </button>
             </div>
         </div>
